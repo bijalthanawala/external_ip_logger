@@ -21,6 +21,14 @@ def validate_and_translate_args() -> argparse.Namespace:
     return args
 
 
+def detect_external_ip() -> str:
+    response: HTTPResponse = urllib.request.urlopen("https://ifconfig.me")
+    content: bytes = response.read()
+    response.close()
+    ip_addr: str = content.decode()
+    return ip_addr
+
+
 def main() -> None:
 
     args: argparse.Namespace = validate_and_translate_args()
@@ -30,10 +38,7 @@ def main() -> None:
 
     print("start_time,end_time,ip_address", file=sys.stdout)
     while True:
-        response: HTTPResponse = urllib.request.urlopen("https://ifconfig.me")
-        content: bytes = response.read()
-        response.close()
-        ip_addr: str = content.decode()
+        ip_addr: str = detect_external_ip()
         curr_time: str = time.strftime("%Y%m%d_%H%M%S")
         print(
             f"Current time: {curr_time}\tCurrent IP: {ip_addr}",
