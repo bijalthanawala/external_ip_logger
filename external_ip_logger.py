@@ -2,15 +2,33 @@
 
 import sys
 import time
+import argparse
 import urllib.request
 from http.client import HTTPResponse
 
 
+def validate_and_translate_args() -> argparse.Namespace:
+    default_delay: int = 60
+
+    parser: argparse.ArgumentParser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--delay",
+        type=int,
+        default=default_delay,
+        help=f"Wait specified number of seconds before each check (Default={default_delay})",
+    )
+    args: argparse.Namespace = parser.parse_args()
+    return args
+
+
 def main() -> None:
+
+    args: argparse.Namespace = validate_and_translate_args()
+
     prev_ip_addr: str = ""
     start_time: str = ""
 
-    print("start_time,end_time,ip_address", sys.stdout)
+    print("start_time,end_time,ip_address", file=sys.stdout)
     while True:
         response: HTTPResponse = urllib.request.urlopen("https://ifconfig.me")
         content: bytes = response.read()
@@ -31,7 +49,7 @@ def main() -> None:
             start_time = curr_time
             prev_ip_addr = ip_addr
 
-        time.sleep(5)
+        time.sleep(args.delay)
 
 
 if __name__ == "__main__":

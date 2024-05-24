@@ -1,6 +1,6 @@
 Implement a cleanerway to exit/end (instead of CTRL-c)
 Accept commandline argument: Time format to print
-Accept commandline argument: Number of seconds to wait between each query
+DONE - Accept commandline argument: Number of seconds to wait between each query
 Accept commandline argument: URL to query for public ip
 Accept commandline argument: Quiet mode. In this mode do not print current ip address
 Explain the stdout and the stderror print leverage (using redirection) in the README file
