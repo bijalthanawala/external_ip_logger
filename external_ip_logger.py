@@ -9,6 +9,10 @@ from http.client import HTTPResponse
 
 def validate_and_translate_args() -> argparse.Namespace:
     default_delay: int = 60
+    default_url: str = "https://ifconfig.me"
+    # Other web services known at this time:
+    #   https://www.ipify.org/
+    #   https://api.my-ip.io/v2/ip.txt
 
     parser: argparse.ArgumentParser = argparse.ArgumentParser()
     parser.add_argument(
@@ -17,15 +21,24 @@ def validate_and_translate_args() -> argparse.Namespace:
         default=default_delay,
         help=f"Wait specified number of seconds before each check (Default={default_delay})",
     )
+    parser.add_argument(
+        "--url",
+        type=str,
+        default=default_url,
+        help=f"URL to query public IP from (Default={default_url})",
+    )
     args: argparse.Namespace = parser.parse_args()
     return args
 
 
-def detect_external_ip() -> str:
-    response: HTTPResponse = urllib.request.urlopen("https://ifconfig.me")
-    content: bytes = response.read()
+def detect_external_ip(url: str) -> str:
+    # Expect a single-line or multi-line response from the http request
+    # If multi-line, expect the first line to be the IP address
+    response: HTTPResponse = urllib.request.urlopen(url)
+    content_bytes: bytes = response.read()
     response.close()
-    ip_addr: str = content.decode()
+    content: str = content_bytes.decode()
+    ip_addr = content.split("\n")[0]
     return ip_addr
 
 
@@ -36,9 +49,13 @@ def main() -> None:
     prev_ip_addr: str = ""
     start_time: str = ""
 
+    print(
+        f"Querying public IP from {args.url} every {args.delay} seconds",
+        file=sys.stderr,
+    )
     print("start_time,end_time,ip_address", file=sys.stdout)
     while True:
-        ip_addr: str = detect_external_ip()
+        ip_addr: str = detect_external_ip(args.url)
         curr_time: str = time.strftime("%Y%m%d_%H%M%S")
         print(
             f"Current time: {curr_time}\tCurrent IP: {ip_addr}",
