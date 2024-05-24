@@ -10,6 +10,7 @@ prev_ip_addr: str = ""
 start_time: str = ""
 end_time: str = ""
 
+print("start_time,end_time,iP_address", sys.stdout)
 while True:
     now: datetime.datetime = datetime.datetime.now()
     response: HTTPResponse = urllib.request.urlopen("https://ifconfig.me")
