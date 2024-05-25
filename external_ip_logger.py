@@ -85,7 +85,7 @@ def main() -> None:
     csv_file_handle = open(csv_filename, "w")
 
     # Write CSV file header
-    print("start_time,end_time,ip_address", file=csv_file_handle)
+    print("ip_address,start_time,end_time", file=csv_file_handle)
     csv_file_handle.flush()
 
     ip_changed: bool = False
@@ -111,7 +111,7 @@ def main() -> None:
         csv_file_pos = csv_file_handle.tell()
         start_time_log = time.strftime("%Y%m%d_%H%M%S", start_time)
         end_time_log = time.strftime("%Y%m%d_%H%M%S", curr_local_time)
-        print(f"{start_time_log},{end_time_log},{prev_ip_addr}", file=csv_file_handle)
+        print(f"{prev_ip_addr},{start_time_log},{end_time_log}", file=csv_file_handle)
         csv_file_handle.flush()
 
         if not args.quiet:
