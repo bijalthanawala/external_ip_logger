@@ -51,8 +51,8 @@ def detect_external_ip(url: str) -> Tuple[bool, str, str]:
     # If multi-line, expect the first line to be the IP address
     try:
         response: HTTPResponse = urllib.request.urlopen(url)
-    except urllib.error.HTTPError as ex_http_error:
-        return False, f"Failed to query {url} ({str(ex_http_error)})", ""
+    except (urllib.error.HTTPError, urllib.error.URLError) as ex_connection_error:
+        return False, f"Failed to query {url} ({str(ex_connection_error)})", ""
 
     content_bytes: bytes = response.read()
     response.close()
@@ -73,11 +73,11 @@ def main() -> None:
     if args.verbose:
         print(
             f"Querying public IP from {args.url} every {args.delay} seconds",
-            file=sys.stderr,
+            file=sys.stdout,
         )
-    print(f"Logging IP address changes to {csv_filename}", file=sys.stderr)
+    print(f"Logging IP address changes to {csv_filename}", file=sys.stdout)
 
-    # Open CSV file - use low-level file access so that we can seek
+    # Open CSV file - use low-level file access (instead of csv api) so that we can seek
     # back/forth after each IP query
     csv_file_handle = open(csv_filename, "w")
 
@@ -92,15 +92,10 @@ def main() -> None:
         ip_addr: str
         is_success, message, ip_addr = detect_external_ip(args.url)
         if not is_success:
-            print(f"{message}", file=sys.stderr)
+            print(f"\n{message}", file=sys.stderr)
             time.sleep(args.delay)
             continue
         curr_local_time: time.struct_time = time.localtime()
-        print(
-            f"Public IP address {ip_addr} as on {time.asctime(curr_local_time)}",
-            file=sys.stderr,
-            end="\r",
-        )
         if not prev_ip_addr:
             # This is the first iteration
             start_time = curr_local_time
@@ -116,8 +111,14 @@ def main() -> None:
         print(f"{start_time_log},{end_time_log},{prev_ip_addr}", file=csv_file_handle)
         csv_file_handle.flush()
 
+        print(
+            f"Public IP address {prev_ip_addr} - observed last at {time.asctime(curr_local_time)}",
+            file=sys.stdout,
+            end="\r",
+        )
+
         if ip_changed:
-            print("", file=sys.stderr)
+            print("", file=sys.stdout)
             # Update variables and prepare for the next iteration
             start_time = curr_local_time
             prev_ip_addr = ip_addr
