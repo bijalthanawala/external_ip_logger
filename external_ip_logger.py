@@ -7,10 +7,12 @@ from typing import Tuple
 import urllib.request
 from http.client import HTTPResponse
 
+default_delay: int = 60
+default_url: str = "https://ifconfig.me"
+default_csv_prefix: str = "external_ip_logger"
+
 
 def validate_and_translate_args() -> argparse.Namespace:
-    default_delay: int = 60
-    default_url: str = "https://ifconfig.me"
     # Other web services known at this time:
     #   https://www.ipify.org/
     #   https://api.my-ip.io/v2/ip.txt
@@ -27,6 +29,13 @@ def validate_and_translate_args() -> argparse.Namespace:
         type=str,
         default=default_url,
         help=f"URL to query public IP from (Default={default_url})",
+    )
+    parser.add_argument(
+        "--csv_prefix",
+        type=str,
+        default=default_csv_prefix,
+        help="CSV filename prefix e.g. With csv_prefix XYZ, "
+        f"the file created will be XYZ_yyyymmdd_hhmmss.csv (Default={default_csv_prefix})",
     )
     parser.add_argument(
         "--verbose",
@@ -58,16 +67,28 @@ def main() -> None:
 
     prev_ip_addr: str = ""
     start_time: time.struct_time = time.localtime()
+    csv_suffix = time.strftime("%Y%m%d_%H%M%S", start_time)
+    csv_filename = f"{args.csv_prefix}_{csv_suffix}.csv"
 
     if args.verbose:
         print(
             f"Querying public IP from {args.url} every {args.delay} seconds",
             file=sys.stderr,
         )
+    print(f"Logging IP address changes to {csv_filename}", file=sys.stderr)
 
-    print("start_time,end_time,ip_address", file=sys.stdout)
+    # Open CSV file - use low-level file access so that we can seek
+    # back/forth after each IP query
+    csv_file_handle = open(csv_filename, "w")
+
+    # Write CSV file header
+    print("start_time,end_time,ip_address", file=csv_file_handle)
+    csv_file_handle.flush()
+
+    ip_changed: bool = False
     while True:
         is_success: bool
+        message: str
         ip_addr: str
         is_success, message, ip_addr = detect_external_ip(args.url)
         if not is_success:
@@ -85,13 +106,26 @@ def main() -> None:
             start_time = curr_local_time
             prev_ip_addr = ip_addr
         elif prev_ip_addr != ip_addr:
-            # Handle IP address change
+            ip_changed = True
+        else:
+            ip_changed = False
+
+        csv_file_pos = csv_file_handle.tell()
+        start_time_log = time.strftime("%Y%m%d_%H%M%S", start_time)
+        end_time_log = time.strftime("%Y%m%d_%H%M%S", curr_local_time)
+        print(f"{start_time_log},{end_time_log},{prev_ip_addr}", file=csv_file_handle)
+        csv_file_handle.flush()
+
+        if ip_changed:
             print("", file=sys.stderr)
-            start_time_log = time.strftime("%Y%m%d_%H%M%S", start_time)
-            end_time_log = time.strftime("%Y%m%d_%H%M%S", curr_local_time)
-            print(f"{start_time_log},{end_time_log},{prev_ip_addr}", file=sys.stdout)
+            # Update variables and prepare for the next iteration
             start_time = curr_local_time
             prev_ip_addr = ip_addr
+        else:
+            # IP did not change in this iteration.
+            # Seek to the start of this line so that last line
+            # updates in the next iteration
+            csv_file_handle.seek(csv_file_pos)
 
         time.sleep(args.delay)
 
