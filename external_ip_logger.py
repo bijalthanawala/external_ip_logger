@@ -13,44 +13,62 @@ from types import FrameType
 
 from typing import Tuple, Any
 
-default_delay: int = 60
-default_url: str = "https://ifconfig.me"
-default_csv_prefix: str = "external_ip_logger"
-default_quiet_mode: bool = False
+DEFAULT_DELAY: int = 60
+DEFAULT_URL: str = "https://ifconfig.me"
+DEFAULT_CSV_PREFIX: str = "external_ip_logger"
+DEFAULT_QUIET_MODE: bool = False
+DEFAULT_QUIETER_MODE: bool = False
 
 
 def validate_and_translate_args() -> argparse.Namespace:
     parser: argparse.ArgumentParser = argparse.ArgumentParser()
+
     parser.add_argument(
         "--delay",
         type=int,
-        default=default_delay,
-        help=f"Wait specified number of seconds before each check (Default={default_delay})",
+        default=DEFAULT_DELAY,
+        help=f"Wait specified number of seconds before each check (Default={DEFAULT_DELAY})",
     )
+
     parser.add_argument(
         "--csv_prefix",
         type=str,
-        default=default_csv_prefix,
+        default=DEFAULT_CSV_PREFIX,
         help="CSV filename prefix e.g. With csv_prefix XYZ, "
-        f"the file created will be XYZ_yyyymmdd_hhmmss.csv (Default={default_csv_prefix})",
+        f"the file created will be XYZ_yyyymmdd_hhmmss.csv (Default={DEFAULT_CSV_PREFIX})",
     )
+
     parser.add_argument(
         "--url",
         type=str,
-        default=default_url,
-        help=f"URL to query public IP from (Default={default_url})",
+        default=DEFAULT_URL,
+        help=f"URL to query public IP from (Default={DEFAULT_URL})",
     )
     # Other web services, that provide ip address, known at this time:
     #   https://www.ipify.org/
     #   https://api.my-ip.io/v2/ip.txt
+
     parser.add_argument(
         "--quiet",
         action="store_true",
-        default=default_quiet_mode,
-        help=f"Run quietly - do not show IP updates on console (Default={default_quiet_mode})",
+        default=DEFAULT_QUIET_MODE,
+        help=f"Run quietly - do not show IP updates on console (Default={DEFAULT_QUIET_MODE})",
+    )
+
+    parser.add_argument(
+        "--quieter",
+        action="store_true",
+        default=DEFAULT_QUIETER_MODE,
+        help=f"Run even quieter - do not show the name of the CSV file also. "
+        f"Implies --quiet also (Default={DEFAULT_QUIETER_MODE})",
     )
 
     args: argparse.Namespace = parser.parse_args()
+
+    if args.quieter:
+        # imply args.quiet also
+        args.quiet = True
+
     return args
 
 
@@ -64,6 +82,7 @@ def detect_external_ip(url: str) -> Tuple[bool, str, str]:
 
     content_bytes: bytes = response.read()
     response.close()
+
     content: str = content_bytes.decode()
     ip_addr = content.split("\n")[0]
     return True, "Successful", ip_addr
@@ -87,7 +106,8 @@ def main() -> None:
     csv_suffix: str = time.strftime("%Y%m%d_%H%M%S", start_time)
     csv_filename: str = f"{args.csv_prefix}_{csv_suffix}.csv"
 
-    print(f"Logging IP address changes to {csv_filename}", file=sys.stdout)
+    if not args.quieter:
+        print(f"Logging IP address changes to {csv_filename}", file=sys.stdout)
 
     if not args.quiet:
         print(
@@ -154,4 +174,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as ex:
+        print(ex)
