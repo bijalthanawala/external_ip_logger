@@ -10,25 +10,16 @@ from http.client import HTTPResponse
 default_delay: int = 60
 default_url: str = "https://ifconfig.me"
 default_csv_prefix: str = "external_ip_logger"
+default_quiet_mode: bool = False
 
 
 def validate_and_translate_args() -> argparse.Namespace:
-    # Other web services known at this time:
-    #   https://www.ipify.org/
-    #   https://api.my-ip.io/v2/ip.txt
-
     parser: argparse.ArgumentParser = argparse.ArgumentParser()
     parser.add_argument(
         "--delay",
         type=int,
         default=default_delay,
         help=f"Wait specified number of seconds before each check (Default={default_delay})",
-    )
-    parser.add_argument(
-        "--url",
-        type=str,
-        default=default_url,
-        help=f"URL to query public IP from (Default={default_url})",
     )
     parser.add_argument(
         "--csv_prefix",
@@ -38,10 +29,21 @@ def validate_and_translate_args() -> argparse.Namespace:
         f"the file created will be XYZ_yyyymmdd_hhmmss.csv (Default={default_csv_prefix})",
     )
     parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose mode",
+        "--url",
+        type=str,
+        default=default_url,
+        help=f"URL to query public IP from (Default={default_url})",
     )
+    # Other web services, that provide ip address, known at this time:
+    #   https://www.ipify.org/
+    #   https://api.my-ip.io/v2/ip.txt
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        default=default_quiet_mode,
+        help=f"Run quietly - do not show IP updates on console (Default={default_quiet_mode})",
+    )
+
     args: argparse.Namespace = parser.parse_args()
     return args
 
@@ -70,12 +72,13 @@ def main() -> None:
     csv_suffix = time.strftime("%Y%m%d_%H%M%S", start_time)
     csv_filename = f"{args.csv_prefix}_{csv_suffix}.csv"
 
-    if args.verbose:
+    print(f"Logging IP address changes to {csv_filename}", file=sys.stdout)
+
+    if not args.quiet:
         print(
             f"Querying public IP from {args.url} every {args.delay} seconds",
             file=sys.stdout,
         )
-    print(f"Logging IP address changes to {csv_filename}", file=sys.stdout)
 
     # Open CSV file - use low-level file access (instead of csv api) so that we can seek
     # back/forth after each IP query
@@ -111,17 +114,20 @@ def main() -> None:
         print(f"{start_time_log},{end_time_log},{prev_ip_addr}", file=csv_file_handle)
         csv_file_handle.flush()
 
-        print(
-            f"Public IP address {prev_ip_addr} - observed last at {time.asctime(curr_local_time)}",
-            file=sys.stdout,
-            end="\r",
-        )
+        if not args.quiet:
+            print(
+                f"Public IP address {prev_ip_addr} - "
+                f"observed last at {time.asctime(curr_local_time)}",
+                file=sys.stdout,
+                end="\r",
+            )
 
         if ip_changed:
-            print("", file=sys.stdout)
             # Update variables and prepare for the next iteration
             start_time = curr_local_time
             prev_ip_addr = ip_addr
+            if not args.quiet:
+                print("", file=sys.stdout)
         else:
             # IP did not change in this iteration.
             # Seek to the start of this line so that last line

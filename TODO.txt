@@ -1,13 +1,13 @@
 TODO (no particular order)
-- Commandline argument: Time format to print
-- Commandline argument: Verbose switch
-- Commandline argument: Quiet mode. In this mode do not print current ip address
+- Commandline argument: Directory to write CSV file to
+- Commandline argument: Time format to log
 - Prevent running more than one instance
 - Validate URL supplied on commandline (regex)
 - Validate ip address returned by the service (regex)
 - Implement a cleaner way to exit (instead of CTRL-c)
 - DEVELOPMENT: Explain development setup/requirements
 - Exit if http request fails for n consecutive attempts
+- CSV: Move IP address as the first column
 - Refactor and make the code modular (and unit-testable)
 - Start writing unitests
 - Determine default_csv_prefix dynamically from the name of the script
@@ -19,3 +19,4 @@ DONE
 - Error handling: Gracefully handle http failure
 - DEVELOPMENT: Check in requirements.txt
 - Commandline: CSV filename prefix to write IP address to
+- Commandline argument: Quiet mode. In this mode do not print current ip address
