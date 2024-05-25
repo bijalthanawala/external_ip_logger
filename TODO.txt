@@ -1,5 +1,4 @@
 TODO (no particular order)
-- Error handling: Gracefully handle http failure
 - Commandline argument: Time format to print
 - Commandline argument: Quiet mode. In this mode do not print current ip address
 - README: Explain usage
@@ -11,7 +10,9 @@ TODO (no particular order)
 - Implement a cleaner way to exit (instead of CTRL-c)
 - DEVELOPMENT: Check in requirements.txt
 - DEVELOPMENT: Explain development setup/requirements
+- Exit if http request fails for n consecutive attempts
 
 DONE
 - Accept commandline argument: Number of seconds to wait between each query
 - Commandline argument: URL to query for public ip
+- Error handling: Gracefully handle http failure

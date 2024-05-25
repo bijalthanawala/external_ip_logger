@@ -3,6 +3,7 @@
 import sys
 import time
 import argparse
+from typing import Tuple
 import urllib.request
 from http.client import HTTPResponse
 
@@ -31,15 +32,19 @@ def validate_and_translate_args() -> argparse.Namespace:
     return args
 
 
-def detect_external_ip(url: str) -> str:
+def detect_external_ip(url: str) -> Tuple[bool, str, str]:
     # Expect a single-line or multi-line response from the http request
     # If multi-line, expect the first line to be the IP address
-    response: HTTPResponse = urllib.request.urlopen(url)
+    try:
+        response: HTTPResponse = urllib.request.urlopen(url)
+    except urllib.error.HTTPError as ex_http_error:
+        return False, f"Failed to query {url} ({str(ex_http_error)})", ""
+
     content_bytes: bytes = response.read()
     response.close()
     content: str = content_bytes.decode()
     ip_addr = content.split("\n")[0]
-    return ip_addr
+    return True, "Successful", ip_addr
 
 
 def main() -> None:
@@ -55,7 +60,13 @@ def main() -> None:
     )
     print("start_time,end_time,ip_address", file=sys.stdout)
     while True:
-        ip_addr: str = detect_external_ip(args.url)
+        is_success: bool
+        ip_addr: str
+        is_success, message, ip_addr = detect_external_ip(args.url)
+        if not is_success:
+            print(f"{message}", file=sys.stderr)
+            time.sleep(args.delay)
+            continue
         curr_time: str = time.strftime("%Y%m%d_%H%M%S")
         print(
             f"Current time: {curr_time}\tCurrent IP: {ip_addr}",
@@ -63,9 +74,11 @@ def main() -> None:
             end="\r",
         )
         if not prev_ip_addr:
+            # This is the first iteration
             start_time = curr_time
             prev_ip_addr = ip_addr
         elif prev_ip_addr != ip_addr:
+            # Handle IP address change
             print("", file=sys.stderr)
             print(f"{start_time},{curr_time},{prev_ip_addr}", file=sys.stdout)
             start_time = curr_time
