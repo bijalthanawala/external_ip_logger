@@ -3,9 +3,13 @@
 import sys
 import time
 import argparse
-from typing import Tuple
-import urllib.request
+from urllib import request
+from urllib.error import HTTPError, URLError
+
 from http.client import HTTPResponse
+from _io import TextIOWrapper
+
+from typing import Tuple
 
 default_delay: int = 60
 default_url: str = "https://ifconfig.me"
@@ -52,8 +56,8 @@ def detect_external_ip(url: str) -> Tuple[bool, str, str]:
     # Expect a single-line or multi-line response from the http request
     # If multi-line, expect the first line to be the IP address
     try:
-        response: HTTPResponse = urllib.request.urlopen(url)
-    except (urllib.error.HTTPError, urllib.error.URLError) as ex_connection_error:
+        response: HTTPResponse = request.urlopen(url)
+    except (HTTPError, URLError) as ex_connection_error:
         return False, f"Failed to query {url} ({str(ex_connection_error)})", ""
 
     content_bytes: bytes = response.read()
@@ -69,8 +73,8 @@ def main() -> None:
 
     prev_ip_addr: str = ""
     start_time: time.struct_time = time.localtime()
-    csv_suffix = time.strftime("%Y%m%d_%H%M%S", start_time)
-    csv_filename = f"{args.csv_prefix}_{csv_suffix}.csv"
+    csv_suffix: str = time.strftime("%Y%m%d_%H%M%S", start_time)
+    csv_filename: str = f"{args.csv_prefix}_{csv_suffix}.csv"
 
     print(f"Logging IP address changes to {csv_filename}", file=sys.stdout)
 
@@ -82,7 +86,7 @@ def main() -> None:
 
     # Open CSV file - use low-level file access (instead of csv api) so that we can seek
     # back/forth after each IP query
-    csv_file_handle = open(csv_filename, "w")
+    csv_file_handle: TextIOWrapper = open(csv_filename, "w")
 
     # Write CSV file header
     print("ip_address,start_time,end_time", file=csv_file_handle)
