@@ -5,6 +5,7 @@ import os
 import time
 import argparse
 import signal
+import re
 from urllib import request
 from urllib.error import HTTPError, URLError
 
@@ -72,6 +73,13 @@ def validate_and_translate_args(default_csv_prefix: str) -> argparse.Namespace:
     return args
 
 
+def validate_ip_address(ip: str) -> bool:
+    regex_ip_pattern = r"^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$"
+    if re.fullmatch(regex_ip_pattern, ip):
+        return True
+    return False
+
+
 def detect_external_ip(url: str) -> Tuple[bool, str, str]:
     # Expect a single-line or multi-line response from the http request
     # If multi-line, expect the first line to be the IP address
@@ -84,7 +92,12 @@ def detect_external_ip(url: str) -> Tuple[bool, str, str]:
     response.close()
 
     content: str = content_bytes.decode()
-    ip_addr = content.split("\n")[0]
+    ip_addr: str = content.split("\n")[0]
+
+    is_valid_ip: bool = validate_ip_address(ip_addr)
+    if not is_valid_ip:
+        return False, f"Invalid IP address {ip_addr}", ""
+
     return True, "Successful", ip_addr
 
 

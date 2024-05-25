@@ -3,7 +3,6 @@ TODO (no particular order)
 - Commandline argument: Time format to log
 - Prevent running more than one instance
 - Validate URL supplied on commandline (regex)
-- Validate ip address returned by the service (regex)
 - Implement a cleaner way to exit (instead of CTRL-c)
 - DEVELOPMENT: Explain development setup/requirements
 - Exit if http request fails for n consecutive attempts
@@ -20,3 +19,4 @@ DONE
 - Commandline argument: Quiet mode. In this mode do not print current ip address
 - CSV: Move IP address as the first column
 - Determine default_csv_prefix dynamically from the name of the script
+- Validate ip address returned by the service (regex)
