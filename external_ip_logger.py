@@ -3,13 +3,15 @@
 import sys
 import time
 import argparse
+import signal
 from urllib import request
 from urllib.error import HTTPError, URLError
 
 from http.client import HTTPResponse
 from _io import TextIOWrapper
+from types import FrameType
 
-from typing import Tuple
+from typing import Tuple, Any
 
 default_delay: int = 60
 default_url: str = "https://ifconfig.me"
@@ -67,6 +69,15 @@ def detect_external_ip(url: str) -> Tuple[bool, str, str]:
     return True, "Successful", ip_addr
 
 
+def enable_ctrl_c_handler(file_handle: TextIOWrapper) -> None:
+    def ctrl_c_handler(signum: int, frame: FrameType | None) -> Any:
+        file_handle.close()
+        print("\nCTRL-C detected. Exiting")
+        exit(0)
+
+    signal.signal(signal.SIGINT, ctrl_c_handler)
+
+
 def main() -> None:
 
     args: argparse.Namespace = validate_and_translate_args()
@@ -87,6 +98,7 @@ def main() -> None:
     # Open CSV file - use low-level file access (instead of csv api) so that we can seek
     # back/forth after each IP query
     csv_file_handle: TextIOWrapper = open(csv_filename, "w")
+    enable_ctrl_c_handler(csv_file_handle)
 
     # Write CSV file header
     print("ip_address,start_time,end_time", file=csv_file_handle)
@@ -134,7 +146,7 @@ def main() -> None:
                 print("", file=sys.stdout)
         else:
             # IP did not change in this iteration.
-            # Seek to the start of this line so that last line
+            # Seek to the start of this line so that this line
             # updates in the next iteration
             csv_file_handle.seek(csv_file_pos)
 
