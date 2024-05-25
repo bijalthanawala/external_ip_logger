@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import sys
+import os
 import time
 import argparse
 import signal
@@ -15,12 +16,11 @@ from typing import Tuple, Any
 
 DEFAULT_DELAY: int = 60
 DEFAULT_URL: str = "https://ifconfig.me"
-DEFAULT_CSV_PREFIX: str = "external_ip_logger"
 DEFAULT_QUIET_MODE: bool = False
 DEFAULT_QUIETER_MODE: bool = False
 
 
-def validate_and_translate_args() -> argparse.Namespace:
+def validate_and_translate_args(default_csv_prefix: str) -> argparse.Namespace:
     parser: argparse.ArgumentParser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -33,9 +33,9 @@ def validate_and_translate_args() -> argparse.Namespace:
     parser.add_argument(
         "--csv_prefix",
         type=str,
-        default=DEFAULT_CSV_PREFIX,
+        default=default_csv_prefix,
         help="CSV filename prefix e.g. With csv_prefix XYZ, "
-        f"the file created will be XYZ_yyyymmdd_hhmmss.csv (Default={DEFAULT_CSV_PREFIX})",
+        "the file created will be XYZ_yyyymmdd_hhmmss.csv (Default=base name of this script)",
     )
 
     parser.add_argument(
@@ -99,7 +99,9 @@ def enable_ctrl_c_handler(file_handle: TextIOWrapper) -> None:
 
 def main() -> None:
 
-    args: argparse.Namespace = validate_and_translate_args()
+    name_of_this_script = os.path.basename(sys.argv[0])
+    default_csv_prefix = os.path.splitext(name_of_this_script)[0]
+    args: argparse.Namespace = validate_and_translate_args(default_csv_prefix)
 
     prev_ip_addr: str = ""
     start_time: time.struct_time = time.localtime()

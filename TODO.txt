@@ -9,7 +9,6 @@ TODO (no particular order)
 - Exit if http request fails for n consecutive attempts
 - Refactor and make the code modular (and unit-testable)
 - Start writing unitests
-- Determine default_csv_prefix dynamically from the name of the script
 - README: Explain usage
 
 DONE
@@ -20,3 +19,4 @@ DONE
 - Commandline: CSV filename prefix to write IP address to
 - Commandline argument: Quiet mode. In this mode do not print current ip address
 - CSV: Move IP address as the first column
+- Determine default_csv_prefix dynamically from the name of the script
