@@ -28,6 +28,11 @@ def validate_and_translate_args() -> argparse.Namespace:
         default=default_url,
         help=f"URL to query public IP from (Default={default_url})",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable verbose mode",
+    )
     args: argparse.Namespace = parser.parse_args()
     return args
 
@@ -52,12 +57,14 @@ def main() -> None:
     args: argparse.Namespace = validate_and_translate_args()
 
     prev_ip_addr: str = ""
-    start_time: str = ""
+    start_time: time.struct_time = time.localtime()
 
-    print(
-        f"Querying public IP from {args.url} every {args.delay} seconds",
-        file=sys.stderr,
-    )
+    if args.verbose:
+        print(
+            f"Querying public IP from {args.url} every {args.delay} seconds",
+            file=sys.stderr,
+        )
+
     print("start_time,end_time,ip_address", file=sys.stdout)
     while True:
         is_success: bool
@@ -67,21 +74,23 @@ def main() -> None:
             print(f"{message}", file=sys.stderr)
             time.sleep(args.delay)
             continue
-        curr_time: str = time.strftime("%Y%m%d_%H%M%S")
+        curr_local_time: time.struct_time = time.localtime()
         print(
-            f"Current time: {curr_time}\tCurrent IP: {ip_addr}",
+            f"Public IP address {ip_addr} as on {time.asctime(curr_local_time)}",
             file=sys.stderr,
             end="\r",
         )
         if not prev_ip_addr:
             # This is the first iteration
-            start_time = curr_time
+            start_time = curr_local_time
             prev_ip_addr = ip_addr
         elif prev_ip_addr != ip_addr:
             # Handle IP address change
             print("", file=sys.stderr)
-            print(f"{start_time},{curr_time},{prev_ip_addr}", file=sys.stdout)
-            start_time = curr_time
+            start_time_log = time.strftime("%Y%m%d_%H%M%S", start_time)
+            end_time_log = time.strftime("%Y%m%d_%H%M%S", curr_local_time)
+            print(f"{start_time_log},{end_time_log},{prev_ip_addr}", file=sys.stdout)
+            start_time = curr_local_time
             prev_ip_addr = ip_addr
 
         time.sleep(args.delay)

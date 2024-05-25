@@ -1,6 +1,7 @@
 TODO (no particular order)
 - Commandline: Mandatory CSV filename to write IP address to
 - Commandline argument: Time format to print
+- Commandline argument: Verbose switch
 - Commandline argument: Quiet mode. In this mode do not print current ip address
 - Prevent running more than one instance
 - Validate URL supplied on commandline (regex)
