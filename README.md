@@ -17,11 +17,19 @@ Instead it queries public IP address at a regular configurable interval (60 seco
 
 #### Simple Usage Run<sup>*</sup>
 ```
-./external_ip_logger.py
+$ ./external_ip_logger.py
 Logging IP address changes to external_ip_logger_20240526_122045.csv
 Querying public IP from https://ifconfig.me every 60 seconds
 Public IP address 6x.7x.2x2.8x - observed last at Sun May 26 12:21:49 2024
 Public IP address 1x0.x1.x26.2x1 - observed last at Sun May 26 12:25:50 2024
+<Press CTRL-C to terminate the scripti anytime>
+
+$ # View the generated CSV file anytime
+$ # The CSV file is updated at every query cycle (60 seconds in this example)
+$ cat external_ip_logger_20240526_122045.csv
+ip_address,start_time,end_time
+6x.6x.2x2.8x,20240526_122048,20240526_122450
+1x0.x1.x26.2x1,20240526_122450,20240526_123152
 ```
 <sup>*</sup>Real IP address masked in this sample output
 
