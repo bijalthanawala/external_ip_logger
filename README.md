@@ -6,7 +6,8 @@ If you do not have a static IP assigned by your ISP and you want to track change
 
 ## Caveat:
 The script does not auto detect the IP address change instantly as it happens.
-Instead it queries public IP address at a regular configurable interval (60 seconds by default). See the [**Options**](https://github.com/bijalthanawala/external_ip_logger/edit/main/README.md#options) for details.
+
+Instead it queries public IP address at a regular configurable interval (60 seconds by default). See the [**Options**](https://github.com/bijalthanawala/external_ip_logger#options) for details.
 
 ## Simple Usage:
 ### On a Linux platform

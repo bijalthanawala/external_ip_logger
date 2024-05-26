@@ -1,4 +1,4 @@
-TODO (no particular order)
+TODO - Features (no particular order)
 - Commandline argument: Directory to write CSV file to
 - Commandline argument: Time format to log
 - Prevent running more than one instance
@@ -9,6 +9,9 @@ TODO (no particular order)
 - Refactor and make the code modular (and unit-testable)
 - Start writing unitests
 - README: Explain usage
+
+ISSUES
+- Displaying new IP on the console is delayed to the next query cycle after a change is detected
 
 DONE
 - Accept commandline argument: Number of seconds to wait between each query
