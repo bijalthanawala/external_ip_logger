@@ -103,6 +103,7 @@ def detect_external_ip(url: str) -> Tuple[bool, str, str]:
 
 def enable_ctrl_c_handler(file_handle: TextIOWrapper) -> None:
     def ctrl_c_handler(signum: int, frame: FrameType | None) -> Any:
+        print("", file=file_handle, end="\n")
         file_handle.close()
         print("\nCTRL-C detected. Exiting")
         exit(0)
@@ -116,7 +117,6 @@ def main() -> None:
     default_csv_prefix = os.path.splitext(name_of_this_script)[0]
     args: argparse.Namespace = validate_and_translate_args(default_csv_prefix)
 
-    prev_ip_addr: str = ""
     start_time: time.struct_time = time.localtime()
     csv_suffix: str = time.strftime("%Y%m%d_%H%M%S", start_time)
     csv_filename: str = f"{args.csv_prefix}_{csv_suffix}.csv"
@@ -139,51 +139,69 @@ def main() -> None:
     print("ip_address,start_time,end_time", file=csv_file_handle)
     csv_file_handle.flush()
 
+    prev_ip_addr: str = ""
     ip_changed: bool = False
+    csv_file_pos: int = csv_file_handle.tell()
     while True:
         is_success: bool
         message: str
         ip_addr: str
+
+        curr_time: time.struct_time = time.localtime()
         is_success, message, ip_addr = detect_external_ip(args.url)
         if not is_success:
             print(f"\n{message}", file=sys.stderr)
             time.sleep(args.delay)
             continue
-        curr_local_time: time.struct_time = time.localtime()
+
         if not prev_ip_addr:
             # This is the first iteration
-            start_time = curr_local_time
+            prev_start_time = curr_time
+            start_time = curr_time
             prev_ip_addr = ip_addr
         elif prev_ip_addr != ip_addr:
             ip_changed = True
+            start_time = curr_time
+            if not args.quiet:
+                print("", file=sys.stdout)
         else:
             ip_changed = False
+            if not args.quiet:
+                print("", file=sys.stdout, end="\r")
 
+        prev_start_time_log: str = time.strftime("%Y%m%d_%H%M%S", prev_start_time)
+        end_time_log: str = time.strftime("%Y%m%d_%H%M%S", curr_time)
         csv_file_pos = csv_file_handle.tell()
-        start_time_log = time.strftime("%Y%m%d_%H%M%S", start_time)
-        end_time_log = time.strftime("%Y%m%d_%H%M%S", curr_local_time)
-        print(f"{prev_ip_addr},{start_time_log},{end_time_log}", file=csv_file_handle)
+        print(
+            f"{prev_ip_addr},{prev_start_time_log},{end_time_log}",
+            file=csv_file_handle,
+            end="",
+        )
+        if ip_changed:
+            print("", file=csv_file_handle, end="\n")
+            csv_file_pos = csv_file_handle.tell()
+            start_time_log: str = time.strftime("%Y%m%d_%H%M%S", start_time)
+            print(
+                f"{ip_addr},{start_time_log},{end_time_log}",
+                file=csv_file_handle,
+                end="",
+            )
+        csv_file_handle.seek(csv_file_pos)
         csv_file_handle.flush()
 
         if not args.quiet:
             print(
-                f"Public IP address {prev_ip_addr} - "
-                f"observed last at {time.asctime(curr_local_time)}",
+                f"Public IP address {ip_addr} - "
+                f"observed last at {time.asctime(curr_time)}",
                 file=sys.stdout,
-                end="\r",
+                end="",
             )
+            sys.stdout.flush()
 
         if ip_changed:
             # Update variables and prepare for the next iteration
-            start_time = curr_local_time
+            prev_start_time = curr_time
             prev_ip_addr = ip_addr
-            if not args.quiet:
-                print("", file=sys.stdout)
-        else:
-            # IP did not change in this iteration.
-            # Seek to the start of this line so that this line
-            # updates in the next iteration
-            csv_file_handle.seek(csv_file_pos)
 
         time.sleep(args.delay)
 
